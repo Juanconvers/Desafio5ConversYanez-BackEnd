@@ -1,11 +1,12 @@
 import express from 'express'
 import mongoose from 'mongoose'
+import cookieParser from 'cookie-parser'
 import messageModel from './models/messages.js'
 import indexRouter from './routes/indexRouter.js'
 import { Server } from 'socket.io'
 import { engine } from 'express-handlebars'
 import { __dirname } from './path.js'
-import productModel from './models/products.js'
+
 
 
 //Configuraciones o declaraciones
@@ -23,6 +24,46 @@ const io = new Server(server)
 mongoose.connect("mongodb+srv://juanconverslegal:Malkut27.7@cluster0.j6k2srb.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
     .then(() => console.log("DB is connected"))
     .catch(e => console.log(e))
+
+
+
+//Middlewares
+app.use(express.json()) 
+app.use(cookieParser())
+app.engine('handlebars', engine())
+app.set('view engine', 'handlebars')
+app.set('views', __dirname + '/views')
+
+app.use('/', indexRouter)
+
+// Cookies Routes
+
+app.get('/setCookie', (req, res) => {
+    res.cookie('MyCookie', 'Esto es una cookie', {maxAge: 4000000}).send("Cookie creada por mí")
+})
+
+app.get('/getCookie', (req, res) => {
+    res.send(req.cookies)
+    })
+
+app.get('/deleteCookie', (req, res) => {
+    res.clearCookie('MyCookie').send("Cookie eliminada totalmente")
+})
+
+
+
+io.on('connection', (socket) => {
+    console.log("Conexion con Socket.io")
+    socket.on('mensaje', async (mensaje) => {
+        try {
+            await messageModel.create(mensaje)
+            const mensajes = await messageModel.find()
+            io.emit('mensajeLogs', mensajes)
+        } catch (e) {
+            io.emit('mensajeLogs', e)
+        }
+    })
+})
 
 
 // await productModel.insertMany([
@@ -43,24 +84,3 @@ mongoose.connect("mongodb+srv://juanconverslegal:Malkut27.7@cluster0.j6k2srb.mon
 //         { title: "Cepillo para el piso", description: "Perfecta condición", category: "Producto de aseo", status: true, stock: 6, code: "JCCY-CV2", price: 1550, thumbnail: [] },
     
 //     ])
-
-
-//Middlewares
-app.use(express.json())
-app.engine('handlebars', engine())
-app.set('view engine', 'handlebars')
-app.set('views', __dirname + '/views')
-
-app.use('/', indexRouter)
-io.on('connection', (socket) => {
-    console.log("Conexion con Socket.io")
-    socket.on('mensaje', async (mensaje) => {
-        try {
-            await messageModel.create(mensaje)
-            const mensajes = await messageModel.find()
-            io.emit('mensajeLogs', mensajes)
-        } catch (e) {
-            io.emit('mensajeLogs', e)
-        }
-    })
-})

@@ -69,6 +69,16 @@ app.get('/session', (req,res) => {
     }
 })
 
+app.post('/login', (req,res) => {
+    const {email, password} = req.body
+
+    if (email == "admin@admin.com" && password == "12345"){
+        req.session.email = email
+        req.session.password = password
+    }
+    console.log(req.session)
+    res.send("login")
+})
 
 
 io.on('connection', (socket) => {

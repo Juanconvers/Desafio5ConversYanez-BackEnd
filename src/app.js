@@ -6,6 +6,7 @@ import indexRouter from './routes/indexRouter.js'
 import { Server } from 'socket.io'
 import { engine } from 'express-handlebars'
 import { __dirname } from './path.js'
+import session from 'express-session'
 
 
 
@@ -29,25 +30,43 @@ mongoose.connect("mongodb+srv://juanconverslegal:Malkut27.7@cluster0.j6k2srb.mon
 
 //Middlewares
 app.use(express.json()) 
-app.use(cookieParser())
+app.use(cookieParser("MiClaveSecreta"))
 app.engine('handlebars', engine())
 app.set('view engine', 'handlebars')
 app.set('views', __dirname + '/views')
-
+ 
 app.use('/', indexRouter)
 
+app.use(session({
+    secret: "claveIndescifrable",
+    resave: true,
+    saveUninitialized: true
+}))
 // Cookies Routes
 
 app.get('/setCookie', (req, res) => {
-    res.cookie('MyCookie', 'Esto es una cookie', {maxAge: 4000000}).send("Cookie creada por mí")
+    res.cookie('MyCookie', 'Esto es una cookie', {maxAge: 4000000, signed: true}).send("Cookie creada por mí")
 })
 
 app.get('/getCookie', (req, res) => {
-    res.send(req.cookies)
+    res.send(req.signedCookies)
     })
 
 app.get('/deleteCookie', (req, res) => {
     res.clearCookie('MyCookie').send("Cookie eliminada totalmente")
+})
+
+// Session Routes
+
+app.get('/session', (req,res) => {
+    console.log(req.session)
+    if(req.session.counter){
+        req.session.counter++
+        res.send(`Usted es el usuario No. ${req.session.counter} en entrar a esta pagina`)
+    }else{
+        req.session.counter = 1
+        res.send(`Usted es el primer usuario en entrar a esta pagina`)
+    }
 })
 
 

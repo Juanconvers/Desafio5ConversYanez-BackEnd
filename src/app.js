@@ -1,12 +1,16 @@
 import express from 'express'
 import mongoose from 'mongoose'
+import session from 'express-session'
+
+import MongoStore from 'connect-mongo'
+
 import cookieParser from 'cookie-parser'
 import messageModel from './models/messages.js'
 import indexRouter from './routes/indexRouter.js'
 import { Server } from 'socket.io'
 import { engine } from 'express-handlebars'
 import { __dirname } from './path.js'
-import session from 'express-session'
+
 
 
 
@@ -30,6 +34,18 @@ mongoose.connect("mongodb+srv://juanconverslegal:Malkut27.7@cluster0.j6k2srb.mon
 
 //Middlewares
 app.use(express.json()) 
+
+app.use(session({
+    secret: "coderSecret",
+    resave: true,
+    store: MongoStore.create({
+        mongoUrl: "mongodb+srv://juanconverslegal:Malkut27.7@cluster0.j6k2srb.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
+        ttl: 60 * 60
+    }),
+    saveUninitialized: true
+}))
+
+
 app.use(cookieParser("MiClaveSecreta"))
 app.engine('handlebars', engine())
 app.set('view engine', 'handlebars')
